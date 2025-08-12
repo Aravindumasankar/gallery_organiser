@@ -9,7 +9,19 @@ from .models import Artwork, Gallery
 
 DATA_FILE = Path("gallery_data.json")
 
+def build_parser() -> argparse.ArgumentParser:
+    """Create an argument parser for the CLI.
 
+    Split out for easier testing and to avoid global parser state.
+    """
+    parser = argparse.ArgumentParser(description="Gallery organiser CLI")
+    parser.add_argument("command", choices=["add", "list", "gui"])
+    parser.add_argument("--name", default="My Gallery")
+    parser.add_argument("--title")
+    parser.add_argument("--artist")
+    parser.add_argument("--year", type=int)
+    return parser
+  
 def load_gallery(name: str) -> Gallery:
     """Load gallery data from disk if available."""
     if DATA_FILE.exists():
@@ -29,6 +41,14 @@ def save_gallery(gallery: Gallery) -> None:
 
 
 def main(argv: list[str] | None = None) -> None:
+
+    parser = build_parser()
+    args = parser.parse_args(argv)
+
+    if args.command in {"add", "list"}:
+        gallery = load_gallery(args.name)
+
+
     parser.add_argument("command", choices=["add", "list", "gui"])
     parser.add_argument("--name", default="My Gallery")
     parser.add_argument("--title")
@@ -54,8 +74,6 @@ def main(argv: list[str] | None = None) -> None:
     else:
         from .gui import run_gui
         run_gui()
-
-
 
 if __name__ == "__main__":  # pragma: no cover
     main()

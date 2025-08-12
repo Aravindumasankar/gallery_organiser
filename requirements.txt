@@ -2,4 +2,3 @@ pytest>=7.0
 
 pillow
 pillow-heif
-
