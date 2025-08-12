@@ -67,4 +67,4 @@ def index() -> object:
 
 def run_server() -> None:
     """Run the development server."""
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)

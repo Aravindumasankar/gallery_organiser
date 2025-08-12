@@ -28,3 +28,14 @@ def test_api_media(monkeypatch, tmp_path):
     assert resp.status_code == 200
     data = resp.get_json()
     assert data[0]["label"] == "cat"
+
+
+def test_run_server_uses_public_host(monkeypatch):
+    called = {}
+
+    def fake_run(*args, **kwargs):
+        called.update(kwargs)
+
+    monkeypatch.setattr(server.app, "run", fake_run)
+    server.run_server()
+    assert called.get("host") == "0.0.0.0"

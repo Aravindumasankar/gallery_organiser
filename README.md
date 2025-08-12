@@ -13,6 +13,11 @@ interface for browsing media files.
 - Built-in file browser to navigate folders and preview images
 - AI-powered image classification to label photos automatically
 - Basic unit tests
+- Optional Docker support for containerised deployment
+
+The updated React frontend provides a modern two-panel layout similar to
+popular online converters, making navigation through folders and viewing
+thumbnails more intuitive.
 
 ## Getting Started
 
@@ -44,6 +49,15 @@ interface for browsing media files.
    Then open <http://127.0.0.1:5000> in your browser. Use the built-in file
    browser to pick a directory and view a gallery-style grid of images with
    automatic labels.
+
+5. **Run with Docker**
+
+   ```bash
+   docker compose up --build
+   ```
+
+   This builds an image with all dependencies installed and serves the
+   application on <http://127.0.0.1:5000>.
 
 You can check the installed version with:
 
