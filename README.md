@@ -16,6 +16,7 @@ interface for browsing media files.
 - Scanning starts only when confirmed and shows a log console of activity
 - Labels and face tags are stored in a SQLite database for later lookup
 - Shows scanning progress and reports skipped items when directories are inaccessible
+- Scanning runs in a background Celery task with detailed progress and a summary of discovered labels
 - Basic unit tests
 - Optional Docker support for containerised deployment
 
@@ -50,13 +51,20 @@ and later search by person name.
    ```bash
    python -m gallery_organiser serve
    ```
+   
+   In another terminal you can start a worker to process scan tasks
+   asynchronously:
+
+   ```bash
+   celery -A gallery_organiser.tasks worker --loglevel=info
+   ```
 
    Then open <http://127.0.0.1:5000> in your browser. Use the built-in file
-   browser to pick a directory, press **Scan**, and view a gallery-style grid
-   of images with automatic labels. The log console records progress and any
-   inaccessible files that were skipped. Use the **Tag** button on an image to
-   associate a detected face with a name, then search for tagged people with
-   the search box.
+   browser to pick a directory, press **Scan**, and a progress bar will update
+   as files are classified in the background. When finished a summary of labels
+   is shown. The log console records progress and any inaccessible files that
+   were skipped. Use the **Tag** button on an image to associate a detected face
+   with a name, then search for tagged people with the search box.
 
 5. **Run with Docker**
 

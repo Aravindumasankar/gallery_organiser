@@ -12,25 +12,38 @@ try:
 except Exception:  # pragma: no cover - pillow-heif is optional
     pass
 
-from .media import scan_media
 from .face import detect_faces
 from .database import init_db, add_face_tag, search_by_name
+from .tasks import scan_media_task
 
 STATIC_DIR = Path(__file__).resolve().parents[1] / "frontend"
 app = Flask(__name__, static_folder=str(STATIC_DIR), static_url_path="")
 init_db()
 
 
-@app.get("/api/media")
-def api_media() -> object:
-    """Return media files under a given directory as JSON.
 
-    Each item includes the file ``path`` and, for images, a ``label`` from
-    the classifier. Logs from the scan are also returned.
-    """
-    path_str = request.args.get("path", ".")
-    files, skipped, logs = scan_media(Path(path_str))
-    return jsonify({"files": files, "skipped": skipped, "logs": logs})
+@app.post("/api/scan")
+def api_scan() -> object:
+    """Kick off a background scan task for *path*."""
+    data = request.get_json(force=True)
+    path_str = data.get("path", ".")
+    task = scan_media_task.delay(path_str)
+    return jsonify({"task_id": task.id})
+
+
+@app.get("/api/scan/<task_id>")
+def api_scan_status(task_id: str) -> object:
+    """Return status information for a scan task."""
+    task = scan_media_task.AsyncResult(task_id)
+    if task.state == "PENDING":
+        return jsonify({"state": "PENDING", "progress": 0})
+    if task.state == "FAILURE":
+        return jsonify({"state": "FAILURE", "error": str(task.info)}), 500
+    meta = task.info or {}
+    current = meta.get("current", 0)
+    total = meta.get("total", 1)
+    meta.update({"state": task.state, "progress": current / total if total else 0})
+    return jsonify(meta)
 
 
 @app.get("/api/dirs")

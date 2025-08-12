@@ -1,6 +1,7 @@
-from gallery_organiser import server, database
+from gallery_organiser import server, database, tasks, media
+from gallery_organiser import server, database, tasks, media
+from gallery_organiser import server, database, tasks, media
 from PIL import Image
-
 
 def setup_db(tmp_path, monkeypatch):
     monkeypatch.setattr(database, "DB_PATH", tmp_path / "db.sqlite")
@@ -24,20 +25,25 @@ def test_api_file(tmp_path):
     assert resp.mimetype == "image/png"
 
 
-def test_api_media(monkeypatch, tmp_path):
+def test_scan_endpoint(monkeypatch, tmp_path):
     setup_db(tmp_path, monkeypatch)
+    tasks.celery_app.conf.task_always_eager = True
 
-    def fake_scan_media(path):
-        return ([{"path": str(tmp_path / "img.jpg"), "label": "cat"}], 0, ["log"])
+    def fake_classify(path):
+        return "cat"
 
-    monkeypatch.setattr(server, "scan_media", fake_scan_media)
+    monkeypatch.setattr(media, "classify_image", fake_classify)
+    img = tmp_path / "a.jpg"
+    Image.new("RGB", (1, 1)).save(img)
     client = server.app.test_client()
-    resp = client.get("/api/media", query_string={"path": str(tmp_path)})
+    resp = client.post("/api/scan", json={"path": str(tmp_path)})
     assert resp.status_code == 200
+    task_id = resp.get_json()["task_id"]
+    resp = client.get(f"/api/scan/{task_id}")
     data = resp.get_json()
-    assert data["files"][0]["label"] == "cat"
-    assert data["skipped"] == 0
-    assert data["logs"] == ["log"]
+    assert data["state"] == "SUCCESS"
+    assert data["files"][0]["path"] == str(img)
+    assert data["summary"]["cat"] == 1
 
 
 def test_tag_and_search(monkeypatch, tmp_path):

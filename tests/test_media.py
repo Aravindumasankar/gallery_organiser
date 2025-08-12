@@ -19,7 +19,7 @@ def test_scan_media(tmp_path, monkeypatch):
     (tmp_path / "doc.txt").write_text("a")
 
     monkeypatch.setattr(media, "classify_image", lambda p: "label")
-    files, skipped, logs = media.scan_media(tmp_path)
+    files, skipped, logs, _ = media.scan_media(tmp_path)
     names = sorted(Path(f["path"]).name for f in files)
     labels = [f.get("label") for f in files if f.get("label")]
     assert names == ["image.jpg", "photo.heic", "video.mp4"]
@@ -37,7 +37,7 @@ def test_scan_media_skips_inaccessible(tmp_path, monkeypatch):
         raise PermissionError
 
     monkeypatch.setattr(media, "classify_image", bad_classify)
-    files, skipped, logs = media.scan_media(tmp_path)
+    files, skipped, logs, _ = media.scan_media(tmp_path)
     assert files == []
     assert skipped == 1
     assert any("Skipped" in log for log in logs)

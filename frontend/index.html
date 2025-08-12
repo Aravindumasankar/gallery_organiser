@@ -22,6 +22,7 @@
       .item img { width: 180px; height: 180px; object-fit: cover; border-radius: 4px; }
       .label { margin-top: 4px; font-size: 14px; }
       .logs { margin-top:10px; background:#000; color:#0f0; padding:10px; height:120px; overflow:auto; font-family:monospace; }
+      .summary { margin-top:10px; }
     </style>
   </head>
   <body>
@@ -36,6 +37,9 @@
         const [logs, setLogs] = React.useState([]);
         const [loading, setLoading] = React.useState(false);
         const [query, setQuery] = React.useState('');
+        const [current, setCurrent] = React.useState(0);
+        const [total, setTotal] = React.useState(0);
+        const [summary, setSummary] = React.useState({});
 
         const loadDirs = React.useCallback(() => {
           fetch(`/api/dirs?path=${encodeURIComponent(path)}`)
@@ -47,14 +51,31 @@
 
         const scan = () => {
           setLoading(true);
-          fetch(`/api/media?path=${encodeURIComponent(path)}`)
-            .then((r) => r.json())
-            .then((data) => {
-              setFiles(data.files);
-              setSkipped(data.skipped);
-              setLogs(data.logs);
-            })
-            .finally(() => setLoading(false));
+          setFiles([]); setSkipped(0); setLogs([]); setSummary({});
+          fetch('/api/scan', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({path})})
+            .then(r=>r.json())
+            .then(({task_id}) => {
+              const poll = () => {
+                fetch(`/api/scan/${task_id}`)
+                  .then(r=>r.json())
+                  .then(data => {
+                    setLogs(data.logs || []);
+                    setCurrent(data.current || 0);
+                    setTotal(data.total || 0);
+                    if(data.state === 'SUCCESS') {
+                      setFiles(data.files);
+                      setSkipped(data.skipped);
+                      setSummary(data.summary || {});
+                      setLoading(false);
+                    } else if(data.state === 'FAILURE') {
+                      setLoading(false);
+                    } else {
+                      setTimeout(poll, 500);
+                    }
+                  });
+              };
+              poll();
+            });
         };
 
         const goUp = () => {
@@ -110,7 +131,17 @@
                   ))
                 ),
                 e('div', { className: 'logs' }, e('pre', null, logs.join('\n'))),
-                loading ? e('div', null, 'Loading...') : e('div', null, `${files.length} files${skipped ? ` (${skipped} skipped)` : ''}`)
+                loading ?
+                  e('div', null,
+                    e('progress', { value: current, max: total || 1, style:{width:'100%'} }),
+                    e('div', null, `${current}/${total} files`)
+                  ) :
+                  e(React.Fragment, null,
+                    e('div', null, `${files.length} files${skipped ? ` (${skipped} skipped)` : ''}`),
+                    e('div', {className:'summary'},
+                      Object.entries(summary).map(([label,count]) => e('div', {key:label}, `${label}: ${count}`))
+                    )
+                  )
               )
             )
           )
