@@ -8,6 +8,7 @@ command line interface for adding and listing pieces in a gallery.
 
 - Data models using Python dataclasses
 - Command line interface for adding and listing artworks
+- Graphical interface for browsing media files
 - Basic unit tests
 
 ## Getting Started
@@ -30,6 +31,13 @@ command line interface for adding and listing pieces in a gallery.
    python -m gallery_organiser add --title "Starry Night" --artist "Vincent van Gogh" --year 1889
    python -m gallery_organiser list
    ```
+4. **Launch the GUI**
+
+   ```bash
+   python -m gallery_organiser gui
+   ```
+
+   Select a directory from the attached hard disk to browse images and videos. HEIC images are supported.
 
 Artworks are stored in `gallery_data.json` in the project root.
 

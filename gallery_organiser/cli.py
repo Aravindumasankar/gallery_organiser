@@ -29,15 +29,16 @@ def save_gallery(gallery: Gallery) -> None:
 
 
 def main(argv: list[str] | None = None) -> None:
-    parser = argparse.ArgumentParser(description="Gallery organiser CLI")
-    parser.add_argument("command", choices=["add", "list"])
+    parser.add_argument("command", choices=["add", "list", "gui"])
     parser.add_argument("--name", default="My Gallery")
     parser.add_argument("--title")
     parser.add_argument("--artist")
     parser.add_argument("--year", type=int)
 
     args = parser.parse_args(argv)
-    gallery = load_gallery(args.name)
+    if args.command in {"add", "list"}:
+        gallery = load_gallery(args.name)
+
 
     if args.command == "add":
         if not args.title or not args.artist:
@@ -46,10 +47,14 @@ def main(argv: list[str] | None = None) -> None:
         gallery.add_artwork(artwork)
         save_gallery(gallery)
         print(f"Added artwork '{artwork.title}' by {artwork.artist}")
-    else:  # list
+    elif args.command == "list":
         for art in gallery.list_artworks():
             yr = art.year if art.year is not None else "Unknown year"
             print(f"{art.title} by {art.artist} ({yr})")
+    else:
+        from .gui import run_gui
+        run_gui()
+
 
 
 if __name__ == "__main__":  # pragma: no cover
