@@ -1,58 +1,44 @@
-"""Image classification utilities using a pre-trained ResNet model.
+"""Image classification utilities using a Hugging Face model.
 
-The classifier lazily loads the model on first use to avoid import costs
-when image classification is not required. If any part of the loading or
-classification fails, the function returns ``"unknown"`` so callers can
-handle environments without the necessary ML dependencies.
+The classifier lazily loads the model on first use to avoid heavy imports
+when classification is not required. If loading fails, ``"unknown"`` is
+returned so callers can handle environments without the ML dependencies.
 """
 from __future__ import annotations
 
 from pathlib import Path
 from typing import List
 
-from PIL import Image
-
 try:  # pragma: no cover - heavy dependency optional
-    import torch
-    from torchvision.models import resnet18, ResNet18_Weights
-except Exception:  # pragma: no cover - fall back when torch is missing
-    torch = None  # type: ignore
+    from transformers import pipeline
+except Exception:  # pragma: no cover - transformers not available
+    pipeline = None  # type: ignore
 
-_model = None
-_transform = None
-_labels: List[str] = []
+_classifier = None
 
 
 def _load_model() -> None:
-    """Load the pre-trained model and preprocessing transforms."""
-    global _model, _transform, _labels
-    if torch is None:  # pragma: no cover - torch not available
+    """Load the image classification pipeline."""
+    global _classifier
+    if pipeline is None:  # pragma: no cover - transformers missing
         return
-    weights = ResNet18_Weights.DEFAULT
-    _model = resnet18(weights=weights)
-    _model.eval()
-    _transform = weights.transforms()
-    _labels = weights.meta.get("categories", [])
+    _classifier = pipeline("image-classification")
 
 
 def classify_image(path: Path) -> str:
     """Return the best-guess label for the image at *path*.
 
-    If the model or dependencies are unavailable, ``"unknown"`` is
-    returned instead of raising an exception.
+    Falls back to ``"unknown"`` if the model or dependencies are
+    unavailable.
     """
     try:
-        if _model is None:
+        if _classifier is None:
             _load_model()
-        if _model is None or torch is None:
+        if _classifier is None:
             return "unknown"
-        img = Image.open(path).convert("RGB")
-        tensor = _transform(img).unsqueeze(0)
-        with torch.no_grad():
-            preds = _model(tensor)[0]
-        idx = int(preds.argmax())
-        if 0 <= idx < len(_labels):
-            return _labels[idx]
+        preds = _classifier(str(path))
+        if preds:
+            return preds[0]["label"]
     except Exception:  # pragma: no cover - best effort only
         pass
     return "unknown"

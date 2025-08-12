@@ -15,12 +15,13 @@
       .sidebar ul { list-style: none; padding: 0; margin: 0; }
       .sidebar li { padding: 6px 8px; cursor: pointer; border-radius: 4px; }
       .sidebar li:hover { background: #f0f0f0; }
-      .main { flex: 1; background: #fff; border: 1px solid #ddd; border-radius: 4px; padding: 10px; }
-      .pathbar { margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+      .main { flex: 1; background: #fff; border: 1px solid #ddd; border-radius: 4px; padding: 10px; display:flex; flex-direction:column; }
+      .pathbar { margin-bottom: 10px; display: flex; gap: 8px; align-items: center; }
       .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
       .item { text-align: center; }
       .item img { width: 180px; height: 180px; object-fit: cover; border-radius: 4px; }
       .label { margin-top: 4px; font-size: 14px; }
+      .logs { margin-top:10px; background:#000; color:#0f0; padding:10px; height:120px; overflow:auto; font-family:monospace; }
     </style>
   </head>
   <body>
@@ -32,22 +33,29 @@
         const [dirs, setDirs] = React.useState([]);
         const [files, setFiles] = React.useState([]);
         const [skipped, setSkipped] = React.useState(0);
+        const [logs, setLogs] = React.useState([]);
         const [loading, setLoading] = React.useState(false);
+        const [query, setQuery] = React.useState('');
 
-        const load = React.useCallback(() => {
-          setLoading(true);
+        const loadDirs = React.useCallback(() => {
           fetch(`/api/dirs?path=${encodeURIComponent(path)}`)
             .then((r) => r.json())
             .then(setDirs);
+        }, [path]);
+
+        React.useEffect(loadDirs, [loadDirs]);
+
+        const scan = () => {
+          setLoading(true);
           fetch(`/api/media?path=${encodeURIComponent(path)}`)
             .then((r) => r.json())
             .then((data) => {
               setFiles(data.files);
               setSkipped(data.skipped);
+              setLogs(data.logs);
             })
             .finally(() => setLoading(false));
-        }, [path]);
-        React.useEffect(load, [load]);
+        };
 
         const goUp = () => {
           if (path === '/') return;
@@ -55,30 +63,54 @@
           setPath(parent);
         };
 
+        const tag = (file) => {
+          const name = prompt('Tag name');
+          if (!name) return;
+          fetch('/api/tag', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({path: file.path, name})})
+            .then(() => alert('Tagged'));
+        };
+
+        const search = () => {
+          if (!query) return;
+          setLoading(true);
+          fetch(`/api/search?name=${encodeURIComponent(query)}`)
+            .then((r) => r.json())
+            .then((data) => {
+              setFiles(data);
+              setDirs([]);
+              setLogs([`Search results for ${query}`]);
+              setSkipped(0);
+            })
+            .finally(() => setLoading(false));
+        };
+
         return e(React.Fragment, null,
           e('header', null, e('h1', null, 'Gallery Organiser')),
           e('div', { className: 'container' },
+            e('div', { className: 'pathbar' },
+              e('button', { onClick: goUp }, 'Up'),
+              e('input', { value: path, onChange: (ev) => setPath(ev.target.value), style:{flex:1} }),
+              e('button', { onClick: scan }, 'Scan'),
+              e('input', { placeholder:'Search person', value: query, onChange: e=>setQuery(e.target.value) }),
+              e('button', { onClick: search }, 'Search')
+            ),
             e('div', { className: 'browser' },
               e('div', { className: 'sidebar' },
                 e('h2', null, 'Folders'),
-                e('button', { onClick: goUp }, 'Up'),
                 e('ul', null,
                   dirs.map((d) => e('li', { key: d, onClick: () => setPath(d) }, d))
                 )
               ),
               e('div', { className: 'main' },
-                e('div', { className: 'pathbar' },
-                  e('span', null, path),
-                  loading
-                    ? e('span', null, 'Scanning...')
-                    : e('span', null, `${files.length} files${skipped ? ` (${skipped} skipped)` : ''}`)
-                ),
                 e('div', { className: 'grid' },
                   files.map((f) => e('div', { key: f.path, className: 'item' },
                     e('img', { src: `/api/file?path=${encodeURIComponent(f.path)}` }),
-                    f.label ? e('div', { className: 'label' }, f.label) : null
+                    f.label ? e('div', { className: 'label' }, f.label) : null,
+                    e('button', { onClick: () => tag(f) }, 'Tag')
                   ))
-                )
+                ),
+                e('div', { className: 'logs' }, e('pre', null, logs.join('\n'))),
+                loading ? e('div', null, 'Loading...') : e('div', null, `${files.length} files${skipped ? ` (${skipped} skipped)` : ''}`)
               )
             )
           )

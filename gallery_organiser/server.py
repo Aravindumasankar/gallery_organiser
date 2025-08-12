@@ -5,6 +5,7 @@ from pathlib import Path
 import io
 from flask import Flask, jsonify, request, send_from_directory, send_file, abort
 from PIL import Image
+
 try:
     import pillow_heif
     pillow_heif.register_heif_opener()  # enable HEIC support if installed
@@ -12,9 +13,12 @@ except Exception:  # pragma: no cover - pillow-heif is optional
     pass
 
 from .media import scan_media
+from .face import detect_faces
+from .database import init_db, add_face_tag, search_by_name
 
 STATIC_DIR = Path(__file__).resolve().parents[1] / "frontend"
 app = Flask(__name__, static_folder=str(STATIC_DIR), static_url_path="")
+init_db()
 
 
 @app.get("/api/media")
@@ -22,11 +26,11 @@ def api_media() -> object:
     """Return media files under a given directory as JSON.
 
     Each item includes the file ``path`` and, for images, a ``label`` from
-    the classifier.
+    the classifier. Logs from the scan are also returned.
     """
     path_str = request.args.get("path", ".")
-    files, skipped = scan_media(Path(path_str))
-    return jsonify({"files": files, "skipped": skipped})
+    files, skipped, logs = scan_media(Path(path_str))
+    return jsonify({"files": files, "skipped": skipped, "logs": logs})
 
 
 @app.get("/api/dirs")
@@ -57,6 +61,31 @@ def api_file() -> object:
             buf.seek(0)
             return send_file(buf, mimetype="image/jpeg")
     return send_file(path)
+
+
+@app.post("/api/tag")
+def api_tag() -> object:
+    data = request.get_json(force=True)
+    path = Path(data.get("path", ""))
+    name = data.get("name")
+    if not path or not name:
+        abort(400)
+    faces = detect_faces(path)
+    if not faces:
+        return jsonify({"status": "no-face"}), 400
+    add_face_tag(str(path), name, faces[0])
+    return jsonify({"status": "ok"})
+
+
+@app.get("/api/search")
+def api_search() -> object:
+    name = request.args.get("name")
+    if not name:
+        abort(400)
+    paths = search_by_name(name)
+    # return basic file records; labels will be looked up via DB by client if needed
+    files = [{"path": p} for p in paths]
+    return jsonify(files)
 
 
 @app.route("/")
