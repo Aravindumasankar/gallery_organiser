@@ -1,14 +1,15 @@
 # Gallery Organiser Starter Pack
 
 This repository provides a minimal starting point for building a gallery
-organiser application. It includes simple data models for artworks and a
-command line interface for adding and listing pieces in a gallery.
+organiser application. It includes simple data models for artworks, a
+command line interface for adding and listing pieces, and a React-based web
+interface for browsing media files.
 
 ## Features
 
 - Data models using Python dataclasses
 - Command line interface for adding and listing artworks
-- Graphical interface for browsing media files
+- Web interface built with React for browsing media files
 - Basic unit tests
 
 ## Getting Started
@@ -18,10 +19,6 @@ command line interface for adding and listing pieces in a gallery.
    ```bash
    pip install -r requirements.txt
    ```
-
-   `tkinter` is part of the Python standard library. If it's missing on your
-   system, install a package such as `python3-tk` (Debian/Ubuntu) or the
-   equivalent for your platform.
 
 2. **Run tests**
 
@@ -36,13 +33,14 @@ command line interface for adding and listing pieces in a gallery.
    python -m gallery_organiser list
    ```
 
-4. **Launch the GUI**
+4. **Launch the web UI**
 
    ```bash
-   python -m gallery_organiser gui
+   python -m gallery_organiser serve
    ```
 
-   Select a directory from the attached hard disk to browse images and videos. HEIC images are supported.
+   Then open <http://127.0.0.1:5000> in your browser and choose a directory
+   to browse images and videos.
 
 Artworks are stored in `gallery_data.json` in the project root.
 

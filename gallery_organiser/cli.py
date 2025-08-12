@@ -16,7 +16,7 @@ def build_parser() -> argparse.ArgumentParser:
     Split out for easier testing and to avoid global parser state.
     """
     parser = argparse.ArgumentParser(description="Gallery organiser CLI")
-    parser.add_argument("command", choices=["add", "list", "gui"])
+    parser.add_argument("command", choices=["add", "list", "serve"])
     parser.add_argument("--name", default="My Gallery")
     parser.add_argument("--title")
     parser.add_argument("--artist")
@@ -61,8 +61,8 @@ def main(argv: list[str] | None = None) -> None:
             yr = art.year if art.year is not None else "Unknown year"
             print(f"{art.title} by {art.artist} ({yr})")
     else:
-        from .gui import run_gui
-        run_gui()
+        from .server import run_server
+        run_server()
 
 
 if __name__ == "__main__":  # pragma: no cover
