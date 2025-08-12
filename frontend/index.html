@@ -5,8 +5,19 @@
     <title>Gallery Organiser</title>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <style>
+      body { font-family: sans-serif; margin: 0; }
+      header { background: #333; color: #fff; padding: 10px; }
+      #browser { padding: 10px; }
+      .dirs button { margin-right: 5px; }
+      .gallery { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+      figure { margin: 0; }
+      figure img { width: 200px; height: 200px; object-fit: cover; display: block; }
+      figcaption { text-align: center; font-size: 0.9em; }
+    </style>
   </head>
   <body>
+    <header>Gallery Organiser</header>
     <div id="root"></div>
     <script>
       const e = React.createElement;
@@ -31,22 +42,19 @@
           setPath(parent);
         };
 
-        return e('div', null,
-          e('div', null,
+        return e('div', { id: 'browser' },
+          e('div', { className: 'path' },
             e('button', { onClick: goUp }, 'Up'),
             e('span', { style: { marginLeft: '8px' } }, path)
           ),
-          e('ul', null,
-            dirs.map((d) => e('li', { key: d },
-              e('button', { onClick: () => setPath(d) }, d)
-            ))
+          e('div', { className: 'dirs' },
+            dirs.map((d) => e('button', { key: d, onClick: () => setPath(d) }, d))
           ),
-          e('div', null,
-            files.map((f) => e('img', {
-              key: f,
-              src: `/api/file?path=${encodeURIComponent(f)}`,
-              style: { maxWidth: '200px', maxHeight: '200px', margin: '4px' }
-            }))
+          e('div', { className: 'gallery' },
+            files.map((f) => e('figure', { key: f.path },
+              e('img', { src: `/api/file?path=${encodeURIComponent(f.path)}` }),
+              e('figcaption', null, f.label)
+            ))
           )
         );
       }

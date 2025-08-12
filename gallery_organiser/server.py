@@ -12,6 +12,7 @@ except Exception:  # pragma: no cover - pillow-heif is optional
     pass
 
 from .media import scan_media
+from .classify import classify_image
 
 STATIC_DIR = Path(__file__).resolve().parents[1] / "frontend"
 app = Flask(__name__, static_folder=str(STATIC_DIR), static_url_path="")
@@ -19,10 +20,13 @@ app = Flask(__name__, static_folder=str(STATIC_DIR), static_url_path="")
 
 @app.get("/api/media")
 def api_media() -> object:
-    """Return media files under a given directory as JSON."""
+    """Return media files and AI labels under a given directory as JSON."""
     path_str = request.args.get("path", ".")
-    files = [str(p) for p in scan_media(Path(path_str))]
-    return jsonify(files)
+    results = []
+    for p in scan_media(Path(path_str)):
+        label = classify_image(p)
+        results.append({"path": str(p), "label": label})
+    return jsonify(results)
 
 
 @app.get("/api/dirs")

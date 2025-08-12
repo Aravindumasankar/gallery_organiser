@@ -1,5 +1,6 @@
 from gallery_organiser.server import app
 from PIL import Image
+import gallery_organiser.server as server
 
 
 def test_api_dirs(tmp_path):
@@ -17,3 +18,14 @@ def test_api_file(tmp_path):
     resp = client.get("/api/file", query_string={"path": str(img_path)})
     assert resp.status_code == 200
     assert resp.mimetype == "image/png"
+
+
+def test_api_media_returns_labels(monkeypatch, tmp_path):
+    img_path = tmp_path / "pic.png"
+    Image.new("RGB", (1, 1)).save(img_path)
+
+    monkeypatch.setattr(server, "classify_image", lambda p: "label")
+    client = app.test_client()
+    resp = client.get("/api/media", query_string={"path": str(tmp_path)})
+    assert resp.status_code == 200
+    assert resp.get_json() == [{"path": str(img_path), "label": "label"}]

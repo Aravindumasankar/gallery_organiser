@@ -2,3 +2,4 @@ pytest>=7.0
 Flask
 Pillow
 pillow-heif
+onnxruntime

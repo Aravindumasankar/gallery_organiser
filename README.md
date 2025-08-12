@@ -11,6 +11,7 @@ interface for browsing media files.
 - Command line interface for adding and listing artworks
 - Web interface built with React for browsing media files
 - Built-in file browser to navigate folders and preview images
+- Automatic image classification using a pre-trained neural network
 - Basic unit tests
 
 ## Getting Started
@@ -41,7 +42,8 @@ interface for browsing media files.
    ```
 
    Then open <http://127.0.0.1:5000> in your browser and use the file
-   browser to navigate folders and preview images.
+   browser to navigate folders, preview images, and see AI-generated
+   labels for each picture.
 
 Artworks are stored in `gallery_data.json` in the project root.
 
