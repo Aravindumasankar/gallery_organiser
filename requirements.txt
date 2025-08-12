@@ -1,0 +1,4 @@
+pytest>=7.0
+pillow
+pillow-heif
+# tkinter is bundled with Python; install a system package like python3-tk if missing
