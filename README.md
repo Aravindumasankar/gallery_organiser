@@ -10,6 +10,7 @@ interface for browsing media files.
 - Data models using Python dataclasses
 - Command line interface for adding and listing artworks
 - Web interface built with React for browsing media files
+- Built-in file browser to navigate folders and preview images
 - Basic unit tests
 
 ## Getting Started
@@ -39,8 +40,8 @@ interface for browsing media files.
    python -m gallery_organiser serve
    ```
 
-   Then open <http://127.0.0.1:5000> in your browser and choose a directory
-   to browse images and videos.
+   Then open <http://127.0.0.1:5000> in your browser and use the file
+   browser to navigate folders and preview images.
 
 Artworks are stored in `gallery_data.json` in the project root.
 

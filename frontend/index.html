@@ -11,18 +11,43 @@
     <script>
       const e = React.createElement;
       function App() {
+        const [path, setPath] = React.useState('/');
+        const [dirs, setDirs] = React.useState([]);
         const [files, setFiles] = React.useState([]);
-        const [path, setPath] = React.useState('.');
-        const load = () => {
+
+        const load = React.useCallback(() => {
+          fetch(`/api/dirs?path=${encodeURIComponent(path)}`)
+            .then((r) => r.json())
+            .then(setDirs);
           fetch(`/api/media?path=${encodeURIComponent(path)}`)
             .then((r) => r.json())
             .then(setFiles);
+        }, [path]);
+        React.useEffect(load, [load]);
+
+        const goUp = () => {
+          if (path === '/') return;
+          const parent = path.replace(/\/$/, '').split('/').slice(0, -1).join('/') || '/';
+          setPath(parent);
         };
-        React.useEffect(load, []);
+
         return e('div', null,
-          e('input', { value: path, onChange: (ev) => setPath(ev.target.value) }),
-          e('button', { onClick: load }, 'Scan'),
-          e('ul', null, files.map((f) => e('li', { key: f }, f)))
+          e('div', null,
+            e('button', { onClick: goUp }, 'Up'),
+            e('span', { style: { marginLeft: '8px' } }, path)
+          ),
+          e('ul', null,
+            dirs.map((d) => e('li', { key: d },
+              e('button', { onClick: () => setPath(d) }, d)
+            ))
+          ),
+          e('div', null,
+            files.map((f) => e('img', {
+              key: f,
+              src: `/api/file?path=${encodeURIComponent(f)}`,
+              style: { maxWidth: '200px', maxHeight: '200px', margin: '4px' }
+            }))
+          )
         );
       }
       const root = ReactDOM.createRoot(document.getElementById('root'));
