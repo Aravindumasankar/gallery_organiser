@@ -31,7 +31,6 @@ command line interface for adding and listing pieces in a gallery.
    python -m gallery_organiser add --title "Starry Night" --artist "Vincent van Gogh" --year 1889
    python -m gallery_organiser list
    ```
-
 4. **Launch the GUI**
 
    ```bash
