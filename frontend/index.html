@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Gallery Organiser</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <style>
+      body { margin: 0; font-family: Arial, sans-serif; background: #f8f9fa; }
+      header { background: #1e293b; color: #fff; padding: 16px; text-align: center; }
+      .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+      .browser { display: flex; gap: 20px; }
+      .sidebar { width: 220px; background: #fff; border: 1px solid #ddd; border-radius: 4px; padding: 10px; }
+      .sidebar h2 { font-size: 16px; margin-top: 0; }
+      .sidebar ul { list-style: none; padding: 0; margin: 0; }
+      .sidebar li { padding: 6px 8px; cursor: pointer; border-radius: 4px; }
+      .sidebar li:hover { background: #f0f0f0; }
+      .main { flex: 1; background: #fff; border: 1px solid #ddd; border-radius: 4px; padding: 10px; }
+      .pathbar { margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+      .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
+      .item { text-align: center; }
+      .item img { width: 180px; height: 180px; object-fit: cover; border-radius: 4px; }
+      .label { margin-top: 4px; font-size: 14px; }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+      const e = React.createElement;
+      function App() {
+        const [path, setPath] = React.useState('/');
+        const [dirs, setDirs] = React.useState([]);
+        const [files, setFiles] = React.useState([]);
+        const [skipped, setSkipped] = React.useState(0);
+        const [loading, setLoading] = React.useState(false);
+
+        const load = React.useCallback(() => {
+          setLoading(true);
+          fetch(`/api/dirs?path=${encodeURIComponent(path)}`)
+            .then((r) => r.json())
+            .then(setDirs);
+          fetch(`/api/media?path=${encodeURIComponent(path)}`)
+            .then((r) => r.json())
+            .then((data) => {
+              setFiles(data.files);
+              setSkipped(data.skipped);
+            })
+            .finally(() => setLoading(false));
+        }, [path]);
+        React.useEffect(load, [load]);
+
+        const goUp = () => {
+          if (path === '/') return;
+          const parent = path.replace(/\/$/, '').split('/').slice(0, -1).join('/') || '/';
+          setPath(parent);
+        };
+
+        return e(React.Fragment, null,
+          e('header', null, e('h1', null, 'Gallery Organiser')),
+          e('div', { className: 'container' },
+            e('div', { className: 'browser' },
+              e('div', { className: 'sidebar' },
+                e('h2', null, 'Folders'),
+                e('button', { onClick: goUp }, 'Up'),
+                e('ul', null,
+                  dirs.map((d) => e('li', { key: d, onClick: () => setPath(d) }, d))
+                )
+              ),
+              e('div', { className: 'main' },
+                e('div', { className: 'pathbar' },
+                  e('span', null, path),
+                  loading
+                    ? e('span', null, 'Scanning...')
+                    : e('span', null, `${files.length} files${skipped ? ` (${skipped} skipped)` : ''}`)
+                ),
+                e('div', { className: 'grid' },
+                  files.map((f) => e('div', { key: f.path, className: 'item' },
+                    e('img', { src: `/api/file?path=${encodeURIComponent(f.path)}` }),
+                    f.label ? e('div', { className: 'label' }, f.label) : null
+                  ))
+                )
+              )
+            )
+          )
+        );
+      }
+      const root = ReactDOM.createRoot(document.getElementById('root'));
+      root.render(e(App));
+    </script>
+  </body>
+</html>
