@@ -43,4 +43,4 @@ Artworks are stored in `gallery_data.json` in the project root.
 
 ## License
 
-This project is released under the MIT license.
+This project is released under the GNU General Public License v3.0 or later.
