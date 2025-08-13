@@ -45,17 +45,7 @@ def main(argv: list[str] | None = None) -> None:
     parser = build_parser()
     args = parser.parse_args(argv)
 
-    if args.command in {"add", "list"}:
-        gallery = load_gallery(args.name)
-
-
-    parser.add_argument("command", choices=["add", "list", "gui"])
-    parser.add_argument("--name", default="My Gallery")
-    parser.add_argument("--title")
-    parser.add_argument("--artist")
-    parser.add_argument("--year", type=int)
-
-    args = parser.parse_args(argv)
+    gallery = None
     if args.command in {"add", "list"}:
         gallery = load_gallery(args.name)
 
